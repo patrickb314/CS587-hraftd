@@ -5,39 +5,41 @@ In this assignment, you will implement a basic Chubby-like lock server in the Go
 ## Starting the cluster server
 I have created a simple Procfile setup for the provided sourcecode that you can use to start and stop the server and individual nodes in it. The default implementation simply starts three servers on the server on which you run, with the second and third nodes starting 5 seconds after the first to give time for the server to start.
 
->	> goreman start 
->	...
->	18:46:32 hraftd0 | 2018/11/19 18:46:32 hraftd started successfully
->	18:46:33 hraftd0 | 2018/11/19 18:46:33 [DEBUG] raft: Votes needed: 1
->	18:46:33 hraftd0 | 2018/11/19 18:46:33 [DEBUG] raft: Vote granted from hraftd0 in term 2. Tally: 1
->	18:46:33 hraftd0 | 2018/11/19 18:46:33 [INFO] raft: Election won. Tally: 1
->	18:46:33 hraftd0 | 2018/11/19 18:46:33 [INFO] raft: Node at :12000 [Leader] entering Leader state
->	18:46:37 hraftd0 | [store] 2018/11/19 18:46:37 received join request for remote node hraftd1 at :12001
->	18:46:37 hraftd0 | [store] 2018/11/19 18:46:37 received join request for remote node hraftd2 at :12002
->	18:46:37 hraftd0 | 2018/11/19 18:46:37 [INFO] raft: Added peer hraftd1, starting replication
->	18:46:37 hraftd0 | [store] 2018/11/19 18:46:37 node hraftd1 at :12001 joined successfully
->	18:46:37 hraftd0 | 2018/11/19 18:46:37 [INFO] raft: Added peer hraftd2, starting replication
->	18:46:37 hraftd0 | [store] 2018/11/19 18:46:37 node hraftd2 at :12002 joined successfully
->	18:46:37 hraftd2 | 2018/11/19 18:46:37 hraftd started successfully
->	18:46:37 hraftd1 | 2018/11/19 18:46:37 hraftd started successfully
->	...
+```
+	> goreman start 
+	...
+	18:46:32 hraftd0 | 2018/11/19 18:46:32 hraftd started successfully
+	18:46:33 hraftd0 | 2018/11/19 18:46:33 [DEBUG] raft: Votes needed: 1
+	18:46:33 hraftd0 | 2018/11/19 18:46:33 [DEBUG] raft: Vote granted from hraftd0 in term 2. Tally: 1
+	18:46:33 hraftd0 | 2018/11/19 18:46:33 [INFO] raft: Election won. Tally: 1
+	18:46:33 hraftd0 | 2018/11/19 18:46:33 [INFO] raft: Node at :12000 [Leader] entering Leader state
+	18:46:37 hraftd0 | [store] 2018/11/19 18:46:37 received join request for remote node hraftd1 at :12001
+	18:46:37 hraftd0 | [store] 2018/11/19 18:46:37 received join request for remote node hraftd2 at :12002
+	18:46:37 hraftd0 | 2018/11/19 18:46:37 [INFO] raft: Added peer hraftd1, starting replication
+	18:46:37 hraftd0 | [store] 2018/11/19 18:46:37 node hraftd1 at :12001 joined successfully
+	18:46:37 hraftd0 | 2018/11/19 18:46:37 [INFO] raft: Added peer hraftd2, starting replication
+	18:46:37 hraftd0 | [store] 2018/11/19 18:46:37 node hraftd2 at :12002 joined successfully
+	18:46:37 hraftd2 | 2018/11/19 18:46:37 hraftd started successfully
+	18:46:37 hraftd1 | 2018/11/19 18:46:37 hraftd started successfully
+	...
+```
 
-You can then use 'kill' to kill individual processes and watch what happens. //Always be sure that you've killed your processes when you finish working on a shared computer!//
+You can then use 'kill' to kill individual processes and watch what happens. *Always be sure that you've killed your processes when you finish working on a shared computer!*
 
 ## Required Server Commands
 1. SET (or POST): insert a key/value pair into the store.
->	> curl -XSET server:port/key -d '{foo:bar}'
+    > curl -XSET server:port/key -d '{foo:bar}'
 1. GET: retreive a key from the store. Note that GET should use consensus to retreive the value from the store, not use a simple lock as the base implementation does. This avoids returning stale values from the store.
->	> curl -XGET server:port/key/foo
->	{ "foo":"bar" }
+    > curl -XGET server:port/key/foo
+    { "foo":"bar" }
 1. DELETE: delete a key/value association from the server.
->	> curl -XDELETE server:port/key/foo
+    > curl -XDELETE server:port/key/foo
 1. LOCK: Set the (advisory) lock on a key/value pair. Returns 'true' on success (lock acquisition), 'false' on failure (including if the lock is already held.) LOCK on a entry not yet created creates a locked entry with a value of "" associated with it.
->	> curl -XLOCK server:port/key/foo
->	{ "foo":true }
+    > curl -XLOCK server:port/key/foo
+    { "foo":true }
 1. LOCK: Set the (advisory) lock on a key/value pair. Returns 'true' on success (lock release), 'false' on failure (including if the lock wasn't locked.) LOCK on a entry not yet created simply returns false.
->	> curl -XLOCK server:port/key/foo
->	{ "foo":true }
+    > curl -XLOCK server:port/key/foo
+    { "foo":true }
 
 
 ##Setting up for running the assignment:
@@ -50,43 +52,45 @@ To carry out the assignment, I recommend the following step:
 2. Learn some of the basics of the Go programming langauge. The language is generally C-like, though with a different variable declaration syntax and some changes that make it both safer and cleaner. That said, the changes take some getting used to. There's no shortage of information on it, and much you'll learn as you simply work on the project.
 
 3. Install a few different go packages you need to be able to build the provided source code and run it. Assuming the golang toolchain is installed on your computer (you'll need at least Go version 1.9), you can do so by running the following commands to download the packages you need into your $GOHOME directory (generally ~/go/). 
->	> go get github.com/hashicorp/raft
->	> go get github.com/hashicorp/raft-boltdb
->	> go get github.com/mattn/goreman
->	> go install github.com/mattn/goreman
+    > go get github.com/hashicorp/raft
+    > go get github.com/hashicorp/raft-boltdb
+    > go get github.com/mattn/goreman
+    > go install github.com/mattn/goreman
 
 4. Add the binary directory for your $GOHOME (by default ~/go/bin) to you path so you can run goreman directly to start little clusters.
 
 5. Make sure you can run the simple hraftd:
-> 	> cd hraftd
->	> goreman start
+    > cd hraftd
+    > goreman start
 
 And in another window
->	curl -XPOST localhost:11000/key -d '{"foo":"bar"}'
->	curl -XGET localhost:11000/key/foo
+    curl -XPOST localhost:11000/key -d '{"foo":"bar"}'
+    curl -XGET localhost:11000/key/foo
 
 ### Assignment Steps
 1. Expand the definition of a Store in http/service.go to include the Lock and Unlock functions. An interface in Go is like an interface in Java - it's a set of named functions that a struct implements to be compatible with a generic calling convention. Use the following definition of the Store interface:
->	// Store is the interface Raft-backed key-value stores must implement.
->	type Store interface {
->	        // Get returns the value for the given key.
->        	Get(key string) (string, error)
->
->        	// Set sets the value for the given key, via distributed consensus.
->        	Set(key, value string) error
->
->        	// Delete removes the given key, via distributed consensus.
->        	Delete(key string) error
->
->        	// Lock a given key, via the distributed consensus
->        	Lock(key string) (bool, error)
->
->        	// Unlock a given key, via the distributed consensus
->        	Unlock(key string) (bool, error)
->
->        	// Join joins the node, identitifed by nodeID and reachable at addr, to the cluster.
->        	Join(nodeID string, addr string) error
->	}
+```
+// Store is the interface Raft-backed key-value stores must implement.
+type Store interface {
+        // Get returns the value for the given key.
+       	Get(key string) (string, error)
+
+       	// Set sets the value for the given key, via distributed consensus.
+       	Set(key, value string) error
+
+       	// Delete removes the given key, via distributed consensus.
+       	Delete(key string) error
+
+       	// Lock a given key, via the distributed consensus
+       	Lock(key string) (bool, error)
+
+       	// Unlock a given key, via the distributed consensus
+       	Unlock(key string) (bool, error)
+
+       	// Join joins the node, identitifed by nodeID and reachable at addr, to the cluster.
+       	Join(nodeID string, addr string) error
+}
+````
 
 You will also need to add empty versions of the Lock() and Unlock() routines to the definition of the TestStore in service_test.go so that the built in test harness continues to compile, and more importantly, to the Store definition in store/store.go.
 
