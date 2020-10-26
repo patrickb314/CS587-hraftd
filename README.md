@@ -30,19 +30,25 @@ You can then use 'kill' to kill individual processes and watch what happens. *Al
 1. SET (or POST): insert a key/value pair into the store.
     > curl -XSET server:port/key -d '{foo:bar}'
 1. GET: retreive a key from the store. Note that GET should use consensus to retreive the value from the store, not use a simple lock as the base implementation does. This avoids returning stale values from the store.
+```
     prompt> curl -XGET server:port/key/foo
     { "foo":"bar" }
+```
 1. DELETE: delete a key/value association from the server.
     prompt> curl -XDELETE server:port/key/foo
 1. LOCK: Set the (advisory) lock on a key/value pair. Returns 'true' on success (lock acquisition), 'false' on failure (including if the lock is already held.) LOCK on a entry not yet created creates a locked entry with a value of "" associated with it.
+```
     prompt> curl -XLOCK server:port/key/foo
     { "foo":true }
+```
 1. LOCK: Set the (advisory) lock on a key/value pair. Returns 'true' on success (lock release), 'false' on failure (including if the lock wasn't locked.) LOCK on a entry not yet created simply returns false.
+```
     prompt> curl -XLOCK server:port/key/foo
     { "foo":true }
+```
 
 
-##Setting up for running the assignment:
+## Setting up for running the assignment:
 
 To carry out the assignment, I recommend the following step:
 
