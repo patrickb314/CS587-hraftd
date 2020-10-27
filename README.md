@@ -117,7 +117,7 @@ You will also need to add empty versions of the Lock() and Unlock() routines to 
 
 5. Implement applyLock() and applyUnlock(). Note that applyXXX() returns an "interface {}" which is just a generic object in Go. The invocation of raft.Apply() in the various routines in the Store() interface returns an "ApplyFuture", the result of a computation the Raft state machine applied. After checking that this Future didn't return an error (using f.Error()), you can then extract the result returned by your Apply() function by calling f.Response(). Note that the result of this is a generic type and you'll need to explicitly convert it to the type you want. To convert the response into a boolean, you would say "str := f.Response().(bool)". 
 
-6. Make Get() use consensus instead of just locally locking, reading, and responding from the map. The original approach results in a faster server (since it can be handled locally by the server without invoking consensus), but can also result in stale reads. The general approach here should be similar to how you handled Step 5, though returning a strong from applyGet() instead of a boolean.
+6. Make Get() use consensus instead of just locally locking, reading, and responding from the map. The original approach results in a faster server (since it can be handled locally by the server without invoking consensus), but can also result in stale reads. The general approach here should be similar to how you handled Step 5, though returning a string from applyGet() instead of a boolean.
 
 ## Testing
 To test your implementation, make sure you can do each of the following things (this is what I will test):
