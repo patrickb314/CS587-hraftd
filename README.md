@@ -31,21 +31,21 @@ You can then use 'kill' to kill individual processes and watch what happens. *Al
 ```
     prompt> curl -XSET server:port/key -d '{foo:bar}'
 ```
-  1. GET: retreive a key from the store. Note that GET should use consensus to retreive the value from the store, not use a simple lock as the base implementation does. This avoids returning stale values from the store.
+  2. GET: retreive a key from the store. Note that GET should use consensus to retreive the value from the store, not use a simple lock as the base implementation does. This avoids returning stale values from the store.
 ```
     prompt> curl -XGET server:port/key/foo
     { "foo":"bar" }
 ```
-  1. DELETE: delete a key/value association from the server.
+  3. DELETE: delete a key/value association from the server.
 ```
     prompt> curl -XDELETE server:port/key/foo
 ```
-  1. LOCK: Set the (advisory) lock on a key/value pair. Returns 'true' on success (lock acquisition), 'false' on failure (including if the lock is already held.) LOCK on a entry not yet created creates a locked entry with a value of "" associated with it.
+  4. LOCK: Set the (advisory) lock on a key/value pair. Returns 'true' on success (lock acquisition), 'false' on failure (including if the lock is already held.) LOCK on a entry not yet created creates a locked entry with a value of "" associated with it.
 ```
     prompt> curl -XLOCK server:port/key/foo
     { "foo":true }
 ```
-  1. LOCK: Set the (advisory) lock on a key/value pair. Returns 'true' on success (lock release), 'false' on failure (including if the lock wasn't locked.) LOCK on a entry not yet created simply returns false.
+  5. UNLOCK: Release the (advisory) lock on a key/value pair. Returns 'true' on success (lock release), 'false' on failure (including if the lock wasn't locked.) UNLOCK on a entry not yet created simply returns false.
 ```
     prompt> curl -XLOCK server:port/key/foo
     { "foo":true }
@@ -58,16 +58,16 @@ To carry out the assignment, I recommend the following step:
 
 ### Setup
   1. Install go tools on the computer on which you work; again, you'll need at least version 1.9 for hashicorp Raft to work properly. Note that "Golang" is generally the right search term to search for information related to the language. On my macintosh, I use MacPorts to install golang. On Linux machines, "apt-cache search golang" or "yum search golang" will find Go tools, depending on if you're running an Ubuntu or Red Hat linux variant, respectively.
-  1. Learn some of the basics of the Go programming langauge. The language is generally C-like, though with a different variable declaration syntax and some changes that make it both safer and cleaner. That said, the changes take some getting used to. There's no shortage of information on it, and much you'll learn as you simply work on the project.
-  1. Install a few different go packages you need to be able to build the provided source code and run it. Assuming the golang toolchain is installed on your computer (you'll need at least Go version 1.9), you can do so by running the following commands to download the packages you need into your $GOHOME directory (generally ~/go/). 
+  2. Learn some of the basics of the Go programming langauge. The language is generally C-like, though with a different variable declaration syntax and some changes that make it both safer and cleaner. That said, the changes take some getting used to. There's no shortage of information on it, and much you'll learn as you simply work on the project.
+  3. Install a few different go packages you need to be able to build the provided source code and run it. Assuming the golang toolchain is installed on your computer (you'll need at least Go version 1.9), you can do so by running the following commands to download the packages you need into your $GOHOME directory (generally ~/go/). 
 ```
     prompt> go get github.com/hashicorp/raft
     prompt> go get github.com/hashicorp/raft-boltdb
     prompt> go get github.com/mattn/goreman
     prompt> go install github.com/mattn/goreman
 ```
-  1. Add the binary directory for your $GOHOME (by default ~/go/bin) to you path so you can run goreman directly to start little clusters.
-  1. Make sure you can run the simple hraftd:
+  4. Add the binary directory for your $GOHOME (by default ~/go/bin) to you path so you can run goreman directly to start little clusters.
+  5. Make sure you can run the simple hraftd:
 ```
     prompt> cd hraftd
     prompt> goreman start
@@ -104,12 +104,11 @@ type Store interface {
 }
 ````
 You will also need to add empty versions of the Lock() and Unlock() routines to the definition of the TestStore in service_test.go so that the built in test harness continues to compile, and more importantly, to the Store definition in store/store.go.
-
-  1. Add "SET", "LOCK", and "UNLOCK" entry points into the http server in http/service.go that call the appropriate functions. "SET" should just fall through into "POST" allowing users to use either "SET" or "POST" to set values in your key/value store. Be sure to note how "GET" returns value to the caller. It creates a Go type, marshalls it into a JSON object, and then sends back that object.
-  1. Make the Lock() and Unlock() functions you added to store.go queue up "lock" and "unlock" commands to Raft, and add code to the switch statement in Apply() function that call applyLock() and applyUnlock(). Apply is called by Raft to modify the store with log entries, so you want to create your own entry points for handling this.
-  1. Convert your store from just being a map from strings to strings to being a map from strings to pointers to structures (I called mine "Value"). Do this by defining a struct type (e.g. type Value struct {...}) and then making the definition of the map by map[string] *Value. From here, you'll need to figure out how to allocate structures to insert them into the map and change Get and Set to use this new data structure. You'll also need to modify how Snapshots are saved and restored to take into account the new data structure type.
-  1. Implement applyLock() and applyUnlock(). Note that applyXXX() returns an "interface {}" which is just a generic object in Go. The invocation of raft.Apply() in the various routines in the Store() interface returns an "ApplyFuture", the result of a computation the Raft state machine applied. After checking that this Future didn't return an error (using f.Error()), you can then extract the result returned by your Apply() function by calling f.Response(). Note that the result of this is a generic type and you'll need to explicitly convert it to the type you want. To convert the response into a boolean, you would say "str := f.Response().(bool)". 
-  1. Make Get() use consensus instead of just locally locking, reading, and responding from the map. The original approach results in a faster server (since it can be handled locally by the server without invoking consensus), but can also result in stale reads. The general approach here should be similar to how you handled Step 5, though returning a string from applyGet() instead of a boolean.
+  2. Add "SET", "LOCK", and "UNLOCK" entry points into the http server in http/service.go that call the appropriate functions. "SET" should just fall through into "POST" allowing users to use either "SET" or "POST" to set values in your key/value store. Be sure to note how "GET" returns value to the caller. It creates a Go type, marshalls it into a JSON object, and then sends back that object.
+  3. Make the Lock() and Unlock() functions you added to store.go queue up "lock" and "unlock" commands to Raft, and add code to the switch statement in Apply() function that call applyLock() and applyUnlock(). Apply is called by Raft to modify the store with log entries, so you want to create your own entry points for handling this.
+  4. Convert your store from just being a map from strings to strings to being a map from strings to pointers to structures (I called mine "Value"). Do this by defining a struct type (e.g. type Value struct {...}) and then making the definition of the map by map[string] *Value. From here, you'll need to figure out how to allocate structures to insert them into the map and change Get and Set to use this new data structure. You'll also need to modify how Snapshots are saved and restored to take into account the new data structure type.
+  5. Implement applyLock() and applyUnlock(). Note that applyXXX() returns an "interface {}" which is just a generic object in Go. The invocation of raft.Apply() in the various routines in the Store() interface returns an "ApplyFuture", the result of a computation the Raft state machine applied. After checking that this Future didn't return an error (using f.Error()), you can then extract the result returned by your Apply() function by calling f.Response(). Note that the result of this is a generic type and you'll need to explicitly convert it to the type you want. To convert the response into a boolean, you would say "str := f.Response().(bool)". 
+  6. Make Get() use consensus instead of just locally locking, reading, and responding from the map. The original approach results in a faster server (since it can be handled locally by the server without invoking consensus), but can also result in stale reads. The general approach here should be similar to how you handled Step 5, though returning a string from applyGet() instead of a boolean.
 
 ## Testing
 To test your implementation, make sure you can do each of the following things (this is what I will test):
