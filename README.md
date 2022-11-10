@@ -57,7 +57,7 @@ You can then use 'kill' to kill individual processes and watch what happens. *Al
 To carry out the assignment, I recommend the following step:
 
 ### Setup
-  1. Install go tools on the computer on which you work; again, you'll need at least version 1.9 for hashicorp Raft to work properly. Note that "Golang" is generally the right search term to search for information related to the language. On my macintosh, I use MacPorts to install golang. On Linux machines, "apt-cache search golang" or "yum search golang" will find Go tools, depending on if you're running an Ubuntu or Red Hat linux variant, respectively.
+  1. Install go tools on the computer on which you work; again, you'll need at least version 1.13 for hashicorp Raft and goreman to work properly. Note that "Golang" is generally the right search term to search for information related to the language. On my macintosh, I use MacPorts to install golang. On Linux machines, "apt-cache search golang" or "yum search golang" will find Go tools, depending on if you're running an Ubuntu or Red Hat linux variant, respectively. Directions for accessing a new version of Go on the CS departmental machines are in a section further below.
   2. Learn some of the basics of the Go programming langauge. The language is generally C-like, though with a different variable declaration syntax and some changes that make it both safer and cleaner. That said, the changes take some getting used to. There's no shortage of information on it, and much you'll learn as you simply work on the project.
   3. Install a few different go packages you need to be able to build the provided source code and run it. Assuming the golang toolchain is installed on your computer (you'll need at least Go version 1.9), you can do so by running the following commands to download the packages you need into your $GOPATH directory (generally ~/go/). 
 ```bash
@@ -79,10 +79,23 @@ And in another window
     prompt> curl -XPOST localhost:11000/key -d '{"foo":"bar"}'
     prompt> curl -XGET localhost:11000/key/foo
 ```
+### To get modern Go on CS machines
+The CS machines default to a relatively old version of Go. TO get access to a more recent version, perform the following steps:
+1. Open a terminal and go into your home directory ("cd")
+2. Open the .bashrc file using "vim .bashrc"
+3. In the .bashrc file, copy and paste the following at the bottom of the file (if it is not empty):
+```
+export GOROOT=/nfs/MLClass/go1.19.3/go
+export GOPATH=$HOME/GoProjects
+export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+```
+4. Adjust the ``GoProjects`` in ``GOPATH`` to the directory where you store your projects. Write and close the file. 
+5. Create a symbolic link from the .bashrc  to .bash_login using ``ln -s .bashrc .bash_login``
+6. Log out of the computer and log back in. Check the version using ``go version`` ... it should now output ``go version go1.19.3 linux/amd64``
 
 ### Assignment Steps
   1. Expand the definition of a Store in http/service.go to include the Lock and Unlock functions. An interface in Go is like an interface in Java - it's a set of named functions that a struct implements to be compatible with a generic calling convention. Use the following definition of the Store interface:
-```go
+```
 // Store is the interface Raft-backed key-value stores must implement.
 type Store interface {
         // Get returns the value for the given key.
