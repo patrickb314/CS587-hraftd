@@ -5,14 +5,15 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
-	"./http"
-	"./store"
+	"CS587-go/main/http"
+	"CS587-go/main/store"
 )
 
 // Command line defaults
@@ -35,7 +36,10 @@ func init() {
 	flag.StringVar(&joinAddr, "join", "", "Set join address, if any")
 	flag.StringVar(&nodeID, "id", "", "Node ID")
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s [options] <raft-data-path> \n", os.Args[0])
+		_, err := fmt.Fprintf(os.Stderr, "Usage: %s [options] <raft-data-path> \n", os.Args[0])
+		if err != nil {
+			return
+		}
 		flag.PrintDefaults()
 	}
 }
@@ -44,17 +48,26 @@ func main() {
 	flag.Parse()
 
 	if flag.NArg() == 0 {
-		fmt.Fprintf(os.Stderr, "No Raft storage directory specified\n")
+		_, err := fmt.Fprintf(os.Stderr, "No Raft storage directory specified\n")
+		if err != nil {
+			return
+		}
 		os.Exit(1)
 	}
 
 	// Ensure Raft storage exists.
 	raftDir := flag.Arg(0)
 	if raftDir == "" {
-		fmt.Fprintf(os.Stderr, "No Raft storage directory specified\n")
+		_, err := fmt.Fprintf(os.Stderr, "No Raft storage directory specified\n")
+		if err != nil {
+			return
+		}
 		os.Exit(1)
 	}
-	os.MkdirAll(raftDir, 0700)
+	err := os.MkdirAll(raftDir, 0700)
+	if err != nil {
+		return
+	}
 
 	s := store.New(inmem)
 	s.RaftDir = raftDir
@@ -71,7 +84,7 @@ func main() {
 	// If join was specified, make the join request.
 	if joinAddr != "" {
 		// If we're joining another cluster, give it time to come up
-		time.Sleep(5*time.Second)
+		time.Sleep(5 * time.Second)
 		if err := join(joinAddr, raftAddr, nodeID); err != nil {
 			log.Fatalf("failed to join node at %s: %s", joinAddr, err.Error())
 		}
@@ -94,7 +107,12 @@ func join(joinAddr, raftAddr, nodeID string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(resp.Body)
 
 	return nil
 }
